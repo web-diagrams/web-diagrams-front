@@ -18,6 +18,7 @@ import { NodeData } from '../constants/constants';
 const initialState: FlowState = {
   pages: null,
   currentPageId: null,
+  selectedNodes: [],
 };
 
 export const flowSlice = createSlice({
@@ -85,6 +86,15 @@ export const flowSlice = createSlice({
 
     onChangePage: (state, action: PayloadAction<string>) => {
       state.currentPageId = action.payload;
+    },
+    onSelectNode: (state, action: PayloadAction<string>) => {
+      state.selectedNodes = [action.payload];
+    },
+    onReleaseNode: (state, action: PayloadAction<string>) => {
+      state.selectedNodes = state.selectedNodes.filter((nodeId) => nodeId !== action.payload);
+    },
+    onReleaseNodes: (state) => {
+      state.selectedNodes = [];
     },
   },
   extraReducers: (builder) => {

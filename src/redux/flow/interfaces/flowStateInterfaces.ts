@@ -3,6 +3,7 @@ import { Edge, Node } from 'reactflow';
 export interface FlowState {
   pages: Page[];
   currentPageId: string;
+  selectedNodes: string[];
 }
 
 export interface Page {
