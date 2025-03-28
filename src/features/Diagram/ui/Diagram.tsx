@@ -1,9 +1,9 @@
 import 'reactflow/dist/style.css';
 import styles from './Diagram.module.scss';
 
-import ReactFlow, { Background, BackgroundVariant, Connection, Controls, SelectionMode } from 'reactflow';
+import ReactFlow, { Background, BackgroundVariant, Connection, Controls, NodeChange, SelectionMode, useEdgesState, useNodesState } from 'reactflow';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { docActions } from '@/redux/doc/slice/docSlice';
 import { useCurrentPage } from '@/hooks/useCurrentPage';
 import { CiCircleInfo } from 'react-icons/ci';
@@ -27,13 +27,16 @@ export const Diagram = ({
 }: DiagramProps) => {
   const { pages, currentPageId, selectedNodes, isUpdated } = useGetDocState();
   const currentPage = useCurrentPage(pages, currentPageId);
-  const { history, step, docName } = useAppSelector((state) => state.doc);
+  const { docName } = useAppSelector((state) => state.doc);
+  const dispatch = useAppDispatch();
 
   if (!currentPage) {
     return <p>Страница не подготовлена</p>
   }
 
-  const dispatch = useAppDispatch();
+  // промежуточные данные
+  const [nodes, setNodes, onNodesChange] = useNodesState(currentPage.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(currentPage.edges);
 
   /** Save logic */
   useKey((event) => {
@@ -45,7 +48,7 @@ export const Diagram = ({
 
   const { contextMenuProps, onShowContextMenu, onCloseContextMenu } = useContextMenu();
 
-  const flowCallbacks = useGetFlowCallbacks(history, step, currentPage);
+  const flowCallbacks = useGetFlowCallbacks({currentPage, nodes, edges});
 
   const onClickOutSide = () => {
     onCloseContextMenu();
@@ -53,6 +56,13 @@ export const Diagram = ({
       dispatch(docActions.onReleaseNodes());
     }
   };
+
+  const onNodesChangesCb = useCallback((changes: NodeChange[]) => {
+    onNodesChange(changes);
+    // if ('dragging' in changes[0] && !changes[0].dragging) {
+    //   dispatch(docActions.onChangeNodes({changes}))
+    // }
+  }, [])
 
   useEffect(() => {
     document.title = docName ?? 'Web diagrams';
@@ -73,12 +83,13 @@ export const Diagram = ({
       </div>
       <NodeContextMenu state={contextMenuProps} />
       <ReactFlow
-        nodes={currentPage.nodes}
-        edges={currentPage.edges}
-        onNodesChange={flowCallbacks.onNodeChange}
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChangesCb}
+        onEdgesChange={onEdgesChange}
+
         onNodesDelete={(e) => console.log(e)}
         onNodeDragStop={flowCallbacks.onNodeDragStop}
-        onEdgesChange={flowCallbacks.onEdgesChange}
         onConnect={(changes: Connection) => dispatch(docActions.onConnect(changes))}
         onEdgeUpdateStart={flowCallbacks.onEdgeUpdateStart}
         onEdgeUpdate={flowCallbacks.onEdgeUpdate}

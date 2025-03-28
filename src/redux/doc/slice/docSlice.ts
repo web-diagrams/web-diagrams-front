@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import { Connection, NodeChange, applyNodeChanges, addEdge, getConnectedEdges, Edge, XYPosition } from 'reactflow';
+import { Connection, NodeChange, applyNodeChanges, addEdge, getConnectedEdges, Edge, Node, XYPosition } from 'reactflow';
 import { CommonNodeDataType, FlowState, DocState } from '../interfaces/docStateInterfaces';
 import { uploadFile } from '../services/uploadFile';
 import { stateToHistory, getNewNode, getCurrentPage } from '../docUtils';
@@ -142,6 +142,11 @@ export const docSlice = createSlice({
       currentPage.edges = addEdge(action.payload, currentPage.edges);
       state.currentState.isUpdated = true;
       stateToHistory(state);
+    },
+    updateNodesAndEdges: (state, action: PayloadAction<{edges: Edge[], nodes: Node<CommonNodeDataType>[]}>) => {
+      const currentPage = getCurrentPage(state)!;
+      currentPage.nodes = action.payload.nodes;
+      currentPage.edges = action.payload.edges;
     },
 
     // Работа со страницами

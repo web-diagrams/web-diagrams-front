@@ -1,11 +1,19 @@
-import { useAppDispatch } from '@/app/hooks';
-import { FlowState, Page } from '@/redux/doc/interfaces/docStateInterfaces';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { CommonNodeDataType, Page } from '@/redux/doc/interfaces/docStateInterfaces';
 import { docActions } from '@/redux/doc/slice/docSlice';
 import { useCallback, useRef } from 'react';
-  import { applyEdgeChanges, Connection, Edge, EdgeChange, NodeChange, reconnectEdge } from 'reactflow';
-import { type Node } from 'reactflow';
+import { applyEdgeChanges, Connection, Edge, Node, EdgeChange, NodeChange, reconnectEdge } from 'reactflow';
 
-export const useGetFlowCallbacks = (history: FlowState[], step: number, currentPage: Page) => {
+interface Props {
+  currentPage: Page;
+  nodes: Node<CommonNodeDataType>[];
+  edges: Edge[];
+}
+
+export const useGetFlowCallbacks = ({
+  currentPage, nodes, edges,
+}: Props) => {
+  const { history, step } = useAppSelector((state) => state.doc);
   const dispatch = useAppDispatch();
   const edgeUpdateSuccessful = useRef(true);
 
@@ -64,6 +72,10 @@ export const useGetFlowCallbacks = (history: FlowState[], step: number, currentP
     [currentPage?.edges, dispatch],
   );
 
+  const onUpdateState = useCallback(() => {
+    dispatch(docActions.updateNodesAndEdges({nodes, edges}));
+  }, [])
+
   return {
     onNodeChange,
     onEdgeUpdateStart,
@@ -73,5 +85,6 @@ export const useGetFlowCallbacks = (history: FlowState[], step: number, currentP
     onRedo,
     onEdgesChange,
     onNodeDragStop,
+    onUpdateState,
   };
 };
